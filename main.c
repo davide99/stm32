@@ -18,9 +18,9 @@ int main() {
     while(1){
         GPIOC_ODR |= GPIOC13;
         for (int i = 0; i < 500000; i++)
-                asm("nop");
+                __asm__("nop");
         GPIOC_ODR &= ~GPIOC13;
         for (int i = 0; i < 500000; i++)
-                asm("nop");
+                __asm__("nop");
     }
 }
