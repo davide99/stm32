@@ -5,7 +5,7 @@
 
 namespace GPIO {
     enum class Port : uint8_t {
-        A, B, C
+        A = 2u, B, C
     };
 
     enum class Pin : uint8_t {
@@ -26,8 +26,6 @@ namespace GPIO {
     void enablePort(Port port);
 
     void pinMode(Pin pin, Mode mode, OutSpeed = OutSpeed::O_2MHZ);
-
-    bool digitalRead(Pin pin);
 
     void toggle(Pin pin);
 }

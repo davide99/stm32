@@ -1,9 +1,8 @@
 #include "GPIO.h"
 
-#define __RMM(addr) (*(volatile uint32_t *)((uintptr_t)addr))
+#include "common.h"
 
-#define RCC_BASE 0x40021000u
-#define RCC_APB2ENR __RMM(RCC_BASE + 0x18u)
+#define RCC_APB2ENR __RMM(0x40021000u + 0x18u)
 
 #define GPIOA_BASE 0x40010800u
 #define GPIO_OFFSET 0x400u      //GPIOA_BASE + GPIO_OFFSET = GPIOB_BASE
@@ -14,47 +13,55 @@
 #define GPIO_ODR(GPIO_BASE)  __RMM(GPIO_BASE + 0x0Cu)
 
 void GPIO::enablePort(GPIO::Port port) {
-    switch (port) {
-        case Port::A:
-            RCC_APB2ENR |= 1u << 2u; //IOPA_EN
-            break;
-        case Port::B:
-            RCC_APB2ENR |= 1u << 3u; //IOPB_EN
-            break;
-        case Port::C:
-            RCC_APB2ENR |= 1u << 4u; //IOPC_EN
-    }
+    RCC_APB2ENR |= 1u << static_cast<uint8_t>(port); //IOPx_EN
+}
+
+static void calcValues(GPIO::Pin pin, uint8_t &pinValue, uintptr_t &gpioBaseAddr) {
+    /*
+     * The pin value is the lowest nibble of pin,
+     * because of how pin are stored in the enum
+     */
+    pinValue = static_cast<uint8_t>(pin) & 0xFu; //0~15
+
+    /*
+     * The port number is the highest nibble of pin,
+     * for the same reason as above
+     */
+    uint8_t portValue = static_cast<uint8_t>(pin) >> 4u; //0=A, 1=B, ...
+
+    gpioBaseAddr = GPIOA_BASE + portValue * GPIO_OFFSET;
 }
 
 void GPIO::pinMode(GPIO::Pin pin, GPIO::Mode mode, GPIO::OutSpeed outSpeed) {
-    uint8_t pinValue = static_cast<uint8_t>(pin) & 0xFu; //0~15
-    uint8_t portValue = static_cast<uint8_t>(pin) >> 4u; //0=A, 1=B, ...
+    uint8_t pinValue;
+    uintptr_t gpioBaseAddr;
 
-    uintptr_t baseGpioAddr = GPIOA_BASE + portValue * GPIO_OFFSET;
+    calcValues(pin, pinValue, gpioBaseAddr);
 
     auto value = static_cast<uint8_t>(mode);
-    if (!(value & 0b11u)) { //is input?
+    if (!(value & 0b11u)) { //is not input? Then add the output speed
         value <<= 2u;
         value |= static_cast<uint8_t>(outSpeed);
     }
 
+    uint8_t shamt;
+
     if (pinValue <= 7u) {
-        GPIO_CRL(baseGpioAddr) |= (value << ((pinValue << 2u) - 1u));
-        GPIO_CRL(baseGpioAddr) &= (value << ((pinValue << 2u) - 1u));
+        shamt = pinValue << 2u; //pinValue takes maximum 3 bits + 2 = 5
+        GPIO_CRL(gpioBaseAddr) &= ~(0xFu << shamt); //Clear the fields
+        GPIO_CRL(gpioBaseAddr) |= static_cast<uint32_t>(value << shamt); //Set the value
     } else {
-        GPIO_CRH(baseGpioAddr) |= (value << (((pinValue - 8u) << 2u) - 1u));
-        GPIO_CRH(baseGpioAddr) &= (value << (((pinValue - 8u) << 2u) - 1u));
+        shamt = (pinValue - 8u) << 2u;
+        GPIO_CRH(gpioBaseAddr) &= ~(0xFu << shamt);
+        GPIO_CRH(gpioBaseAddr) |= static_cast<uint32_t>(value << shamt);
     }
 }
 
-bool GPIO::digitalRead(GPIO::Pin pin) {
-    return false;
-}
-
 void GPIO::toggle(GPIO::Pin pin) {
-    uint8_t pinValue = static_cast<uint8_t>(pin) & 0xFu; //0~15
-    uint8_t portValue = static_cast<uint8_t>(pin) >> 4u; //0=A, 1=B, ...
-    uintptr_t baseGpioAddr = GPIOA_BASE + portValue * GPIO_OFFSET;
+    uint8_t pinValue;
+    uintptr_t gpioBaseAddr;
 
-    GPIO_ODR(baseGpioAddr) ^= (1u << pinValue);
+    calcValues(pin, pinValue, gpioBaseAddr);
+
+    GPIO_ODR(gpioBaseAddr) ^= (1u << pinValue);
 }

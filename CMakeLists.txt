@@ -48,7 +48,7 @@ add_executable(${PROJECT_NAME}
         core.s
         main.cpp
         lib/GPIO.h lib/GPIO.cpp
-)
+        lib/common.h)
 
 target_link_libraries(${PROJECT_NAME}
         ${CPU_OPTIONS}
