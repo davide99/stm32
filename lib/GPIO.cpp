@@ -65,3 +65,15 @@ void GPIO::toggle(GPIO::Pin pin) {
 
     GPIO_ODR(gpioBaseAddr) ^= (1u << pinValue);
 }
+
+void GPIO::digitalWrite(Pin pin, bool value) {
+    uint8_t pinValue;
+    uintptr_t gpioBaseAddr;
+
+    calcValues(pin, pinValue, gpioBaseAddr);
+
+    if (value)
+        GPIO_ODR(gpioBaseAddr) |= 1u << pinValue;
+    else
+        GPIO_ODR(gpioBaseAddr) &= ~(1u << pinValue);
+}

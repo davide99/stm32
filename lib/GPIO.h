@@ -28,6 +28,8 @@ namespace GPIO {
     void pinMode(Pin pin, Mode mode, OutSpeed = OutSpeed::O_2MHZ);
 
     void toggle(Pin pin);
+
+    void digitalWrite(Pin pin, bool value);
 }
 
 #endif
