@@ -30,7 +30,6 @@ add_compile_options(
         $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>
         $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
         -Wall
-        #--specs=nosys.specs
         -fno-common
         -ffunction-sections
         -fdata-sections
@@ -47,14 +46,15 @@ link_directories(
 add_executable(${PROJECT_NAME}
         vector_table.s
         core.s
-        main.c
+        main.cpp
+        lib/GPIO.h lib/GPIO.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
         ${CPU_OPTIONS}
         -T${LINKER_SCRIPT}
+        --specs=nosys.specs
         --static
-        -Wl,-Map=${TARGET}.map
         -Wl,--gc-sections
         -nostdlib
         -lgcc
