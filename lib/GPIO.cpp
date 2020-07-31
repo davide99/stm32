@@ -32,29 +32,28 @@ static void calcValues(GPIO::Pin pin, uint8_t &pinValue, uintptr_t &gpioBaseAddr
     gpioBaseAddr = GPIOA_BASE + portValue * GPIO_OFFSET;
 }
 
-void GPIO::pinMode(GPIO::Pin pin, GPIO::Mode mode, GPIO::OutSpeed outSpeed) {
-    uint8_t pinValue;
-    uintptr_t gpioBaseAddr;
-
-    calcValues(pin, pinValue, gpioBaseAddr);
-
-    auto value = static_cast<uint8_t>(mode);
-    if (!(value & 0b11u)) { //is not input? Then add the output speed
-        value <<= 2u;
-        value |= static_cast<uint8_t>(outSpeed);
-    }
-
+static void setCnfAndMode(uintptr_t gpioBaseAddr, uint8_t cnfMode, uint8_t pinValue) {
     uint8_t shamt;
 
     if (pinValue <= 7u) {
         shamt = pinValue << 2u; //pinValue takes maximum 3 bits + 2 = 5
         GPIO_CRL(gpioBaseAddr) &= ~(0xFu << shamt); //Clear the fields
-        GPIO_CRL(gpioBaseAddr) |= static_cast<uint32_t>(value << shamt); //Set the value
+        GPIO_CRL(gpioBaseAddr) |= static_cast<uint32_t>(cnfMode << shamt); //Set the value
     } else {
         shamt = (pinValue - 8u) << 2u;
         GPIO_CRH(gpioBaseAddr) &= ~(0xFu << shamt);
-        GPIO_CRH(gpioBaseAddr) |= static_cast<uint32_t>(value << shamt);
+        GPIO_CRH(gpioBaseAddr) |= static_cast<uint32_t>(cnfMode << shamt);
     }
+}
+
+void GPIO::setOutPin(GPIO::Pin pin, GPIO::OutMode mode, GPIO::OutSpeed speed) {
+    uint8_t pinValue;
+    uintptr_t gpioBaseAddr;
+
+    calcValues(pin, pinValue, gpioBaseAddr);
+
+    uint8_t value = (uint8_t) (static_cast<uint8_t>(mode) << 2u) | static_cast<uint8_t>(speed);
+    setCnfAndMode(gpioBaseAddr, value, pinValue);
 }
 
 void GPIO::toggle(GPIO::Pin pin) {
@@ -66,7 +65,7 @@ void GPIO::toggle(GPIO::Pin pin) {
     GPIO_ODR(gpioBaseAddr) ^= (1u << pinValue);
 }
 
-void GPIO::digitalWrite(Pin pin, bool value) {
+void GPIO::digitalWrite(GPIO::Pin pin, bool value) {
     uint8_t pinValue;
     uintptr_t gpioBaseAddr;
 
@@ -76,4 +75,28 @@ void GPIO::digitalWrite(Pin pin, bool value) {
         GPIO_ODR(gpioBaseAddr) |= 1u << pinValue;
     else
         GPIO_ODR(gpioBaseAddr) &= ~(1u << pinValue);
+}
+
+void GPIO::setInPin(GPIO::Pin pin, GPIO::InMode mode) {
+    uint8_t pinValue;
+    uintptr_t gpioBaseAddr;
+
+    calcValues(pin, pinValue, gpioBaseAddr);
+
+    auto value = static_cast<uint8_t>(mode) & 0b1111u;
+    setCnfAndMode(gpioBaseAddr, value, pinValue);
+
+    if ((uint8_t) (static_cast<uint8_t>(mode) >> 4u) & 1u)
+        GPIO_ODR(gpioBaseAddr) |= 1u << pinValue;
+    else
+        GPIO_ODR(gpioBaseAddr) &= ~(1u << pinValue);
+}
+
+bool GPIO::digitalRead(GPIO::Pin pin) {
+    uint8_t pinValue;
+    uintptr_t gpioBaseAddr;
+
+    calcValues(pin, pinValue, gpioBaseAddr);
+
+    return (GPIO_IDR(gpioBaseAddr) & (1u << pinValue)) != 0;
 }

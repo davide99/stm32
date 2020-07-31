@@ -1,4 +1,4 @@
-#include "lib/GPIO.h"
+#include "../lib/GPIO.h"
 
 /*
  * +---------+            ^

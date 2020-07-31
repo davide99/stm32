@@ -4,9 +4,12 @@
 #include <cstdint>
 
 namespace GPIO {
+
     enum class Port : uint8_t {
         A = 2u, B, C
     };
+
+    void enablePort(Port port);
 
     enum class Pin : uint8_t {
         A0 = 0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A15 = 15,
@@ -14,22 +17,27 @@ namespace GPIO {
         C13 = 45, C14, C15
     };
 
-    enum class Mode : uint8_t {
-        IN_ANALOG = 0b0000u, IN_FLOATING = 0b0100u, IN_PULL = 0b1000u,
-        OUT_PUSH_PULL = 0b00u, OUT_OPEN_DRAIN = 0b01u
+    enum class OutMode : uint8_t {
+        PushPull = 0u, OpenDrain, AltPushPull, AltOpenDrain
     };
 
     enum class OutSpeed : uint8_t {
-        O_10MHZ = 0b01u, O_2MHZ = 0b10u, O_50MHZ = 0b11u
+        TenMHz = 1u, TwoMHz, FiftyMHz
     };
 
-    void enablePort(Port port);
+    void setOutPin(Pin pin, OutMode mode = OutMode::PushPull, OutSpeed speed = OutSpeed::TwoMHz);
 
-    void pinMode(Pin pin, Mode mode, OutSpeed = OutSpeed::O_2MHZ);
+    enum class InMode : uint8_t {
+        Analog = 0u, Floating = 0b0100u, PullDown = 0b01000u, PullUp = 0b11000u
+    };
+
+    void setInPin(Pin pin, InMode mode = InMode::Floating);
 
     void toggle(Pin pin);
 
     void digitalWrite(Pin pin, bool value);
+
+    bool digitalRead(Pin pin);
 }
 
 #endif
