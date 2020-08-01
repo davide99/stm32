@@ -39,6 +39,8 @@ namespace GPIO {
 
     bool digitalRead(Pin pin);
 
+    void enableAlternativeFunction();
+
     enum class IntTrigger : uint8_t {
         Rising, Falling, RisingAndFalling
     };
