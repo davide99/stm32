@@ -3,17 +3,17 @@
 /*
  * +---------+            ^
  * |      C13|---LED      |
- * |      C14|--------BTN-+
+ * |       A0|--------BTN-+
  * |         |
  * |  STM32  |
  * +---------+
  */
 
-volatile bool entrato;
+volatile bool flag;
 
 extern "C" {
     void EXTI0_IRQ_handler(void) {
-        entrato = true;
+        flag = true;
         GPIO::clearPendingInterrupt(GPIO::Pin::A0);
     }
 }
@@ -26,14 +26,14 @@ int main() {
     GPIO::setInPin(GPIO::Pin::A0, GPIO::InMode::PullDown);
 
     GPIO::enableAlternativeFunction();
-    GPIO::setupInterrupt(GPIO::Pin::A0, GPIO::IntTrigger::Rising, GPIO::IntPriority::P10);
+    GPIO::setupInterrupt(GPIO::Pin::A0, GPIO::IntTrigger::Rising, GPIO::IntPriority::Default);
 
-    entrato = false;
+    flag = false;
 
     while (true) {
-        if(entrato){
+        if(flag){
             GPIO::toggle(GPIO::Pin::C13);
-            entrato = false;
+            flag = false;
         }
     }
 }

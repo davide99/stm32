@@ -173,10 +173,10 @@ void GPIO::setupInterrupt(Pin pin, IntTrigger trigger, IntPriority priority) {
     }
 
     //Enable the interrupt
-    uint8_t iserOffset = (uint8_t) (irqNumbers[index] >> 2u) & ~0b11u;
+    uint8_t iserOffset = (uint8_t) (irqNumbers[index] >> 3u) & ~0b11u;
     uint8_t iserBitOffset = irqNumbers[index] & 0b11111u;
 
-    __RMM(NVIC_ISER0_ADDR + iserOffset) |= (1u << iserBitOffset);
+    __RMM(NVIC_ISER0_ADDR + iserOffset) |= (uint32_t) (1u << iserBitOffset);
 }
 
 void GPIO::clearPendingInterrupt(GPIO::Pin pin) {
