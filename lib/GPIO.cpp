@@ -12,6 +12,20 @@
 #define GPIO_IDR(GPIO_BASE)  __RMM(GPIO_BASE + 0x08u)
 #define GPIO_ODR(GPIO_BASE)  __RMM(GPIO_BASE + 0x0Cu)
 
+
+#define AFIO_EXTICR1_ADDR 0x40010000u + 0x08u
+
+#define EXTI 0x40010400u
+#define EXTI_IMR  __RMM(EXTI + 0x00u)
+#define EXTI_RTSR __RMM(EXTI + 0x08u)
+#define EXTI_FTSR __RMM(EXTI + 0x0Cu)
+#define EXTI_PR   __RMM(EXTI + 0x14u)
+
+#define NVIC_BASE 0xE00E100u //Programming manual, pag 128
+#define NVIC_ISER0_ADDR (NVIC_BASE + 0x000u)
+#define NVIC_IPR0_ADDR  (NVIC_BASE + 0x300u)
+
+
 void GPIO::enablePort(GPIO::Port port) {
     RCC_APB2ENR |= 1u << static_cast<uint8_t>(port); //IOPx_EN
 }
@@ -72,7 +86,7 @@ void GPIO::digitalWrite(GPIO::Pin pin, bool value) {
     calcValues(pin, pinValue, gpioBaseAddr);
 
     if (value)
-        GPIO_ODR(gpioBaseAddr) |= 1u << pinValue;
+        GPIO_ODR(gpioBaseAddr) |= (1u << pinValue);
     else
         GPIO_ODR(gpioBaseAddr) &= ~(1u << pinValue);
 }
@@ -87,7 +101,7 @@ void GPIO::setInPin(GPIO::Pin pin, GPIO::InMode mode) {
     setCnfAndMode(gpioBaseAddr, value, pinValue);
 
     if ((uint8_t) (static_cast<uint8_t>(mode) >> 4u) & 1u)
-        GPIO_ODR(gpioBaseAddr) |= 1u << pinValue;
+        GPIO_ODR(gpioBaseAddr) |= (1u << pinValue);
     else
         GPIO_ODR(gpioBaseAddr) &= ~(1u << pinValue);
 }
@@ -99,4 +113,78 @@ bool GPIO::digitalRead(GPIO::Pin pin) {
     calcValues(pin, pinValue, gpioBaseAddr);
 
     return (GPIO_IDR(gpioBaseAddr) & (1u << pinValue)) != 0;
+}
+
+void GPIO::setupInterrupt(Pin pin, IntTrigger trigger, IntPriority priority) {
+    /*
+     * Line interrupt configuration:
+     * -Line 0
+     * -Line 1
+     * -Line 2
+     * -Line 3
+     * -Line 4
+     * -Line 5..9
+     * -Line 10..15
+     */
+
+    uint8_t pinValue = static_cast<uint8_t>(pin) & 0xFu;
+    uint8_t portValue = static_cast<uint8_t>(pin) >> 4u;
+    uint8_t extiCrXregOffset = pinValue & 0b1100u; //pinValue >> 2 << 2
+
+    //Some black magic to fill AFIO_EXTICRx (clear and set)
+    __RMM(AFIO_EXTICR1_ADDR + extiCrXregOffset) &= ~(uint32_t) (0xFu << ((pinValue & 0b11u) << 2u));
+    __RMM(AFIO_EXTICR1_ADDR + extiCrXregOffset) |= (uint32_t) (portValue << ((pinValue & 0b11u) << 2u));
+
+    //Configure the interrupt mask register
+    EXTI_IMR |= (1u << pinValue); //Unmask interrupt for line pinValue
+
+    //Enable rising edge detection
+    if (trigger == IntTrigger::Rising || trigger == IntTrigger::RisingAndFalling)
+        EXTI_RTSR |= (1u << pinValue);
+    else
+        EXTI_RTSR &= ~(1u << pinValue);
+
+    //Enable falling edge detection
+    if (trigger == IntTrigger::Falling || trigger == IntTrigger::RisingAndFalling)
+        EXTI_FTSR |= (1u << pinValue);
+    else
+        EXTI_FTSR &= ~(1u << pinValue);
+
+    uint8_t irqNumbers[] = {6, 7, 8, 9, 10, 23, 40}; //RM008, pag 205
+    /*                     ^            ^   ^   ^
+     *                     Line 0       |   |   |
+     *                             Line 4   |   |
+     *                              Line 5..9   |
+     *                                Line 10..15
+     */
+    uint8_t index;
+    if (pinValue <= 4)
+        index = pinValue;
+    else if (pinValue <= 9)
+        index = 5;
+    else
+        index = 6;
+
+    //Set the interrupt priority (Programming manual rev6, pag 125)
+    //Find the IPRx register
+    if (priority != IntPriority::Default) {
+
+
+        uint8_t iprOffset = irqNumbers[index] & 0b1100u;             //register offset wrt IPR0
+        uint8_t iprByteOffset = (irqNumbers[index] & 0b0011u) << 3u; //in-register offset
+
+        //OK, now we are finally ready to set the interrupt priority
+        __RMM(NVIC_IPR0_ADDR + iprOffset) &= ~(uint32_t) (0xFFu << iprByteOffset);
+        __RMM(NVIC_IPR0_ADDR + iprOffset) |= (uint32_t) (static_cast<uint8_t>(priority) << (iprByteOffset + 4u));
+    }
+
+    //Enable the interrupt
+    uint8_t iserOffset = (uint8_t) (irqNumbers[index] >> 2u) & ~0b11u;
+    uint8_t iserBitOffset = irqNumbers[index] & 0b11111u;
+
+    __RMM(NVIC_ISER0_ADDR + iserOffset) |= (uint32_t) (1u << iserBitOffset);
+}
+
+void GPIO::clearPendingInterrupt(GPIO::Pin pin) {
+    EXTI_PR |= (1u << (static_cast<uint8_t>(pin) & 0xFu));
 }
