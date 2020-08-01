@@ -47,6 +47,7 @@ add_executable(${PROJECT_NAME}
         vector_table.s
         core.s
         main.cpp
+        lib/USART.h lib/USART.cpp
         lib/GPIO.h lib/GPIO.cpp
         lib/common.h)
 

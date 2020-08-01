@@ -184,5 +184,9 @@ void GPIO::clearPendingInterrupt(GPIO::Pin pin) {
 }
 
 void GPIO::enableAlternativeFunction() {
+    /*
+     * Alternative function needs to be enabled to make external
+     * interrupts working
+     */
     RCC_APB2ENR |= 1u;
 }
