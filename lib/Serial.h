@@ -14,6 +14,7 @@ public:
     explicit Serial(SerialN n, uint32_t baudRate = 9600u, bool enableRxInterrupt = false);
     uint8_t read() const;
     void write(uint8_t byte) const;
+    void close() const;
 };
 
 

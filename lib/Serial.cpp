@@ -18,6 +18,14 @@
 #define USART_BRR(base) __RMM(base + 0x08u)
 #define USART_CR1(base) __RMM(base + 0x0Cu)
 
+#define USART_CR1_RE ((uint32_t)(1u << 2u))
+#define USART_CR1_TE ((uint32_t)(1u << 3u))
+#define USART_CR1_UE ((uint32_t)(1u << 13u))
+
+#define USART_SR_RXNE ((uint32_t)(1u << 5u))
+#define USART_SR_TC   ((uint32_t)(1u << 6u))
+#define USART_SR_TXE  ((uint32_t)(1u << 7u))
+
 Serial::Serial(SerialN n, uint32_t baudRate, bool enableRxInterrupt) {
     switch (n) {
         case SerialN::S1: {
@@ -53,16 +61,20 @@ Serial::Serial(SerialN n, uint32_t baudRate, bool enableRxInterrupt) {
     }
 
     USART_BRR(this->baseAddress) = F_CPU / baudRate;
-    USART_CR1(this->baseAddress) = 0x200Cu;
+    USART_CR1(this->baseAddress) = USART_CR1_RE | USART_CR1_TE | USART_CR1_UE;
 }
 
 uint8_t Serial::read() const {
-    while (!(USART_SR(this->baseAddress) & (1u << 5u)));
+    while (!(USART_SR(this->baseAddress) & USART_SR_RXNE));
     return USART_DR(this->baseAddress);
 }
 
 void Serial::write(uint8_t byte) const {
-    while (!(USART_SR(this->baseAddress) & (1u << 7u)));
+    while (!(USART_SR(this->baseAddress) & USART_SR_TXE));
     USART_DR(this->baseAddress) = byte;
-    while (!(USART_SR(this->baseAddress) & (1u << 6u)));
+    while (!(USART_SR(this->baseAddress) & USART_SR_TC));
+}
+
+void Serial::close() const {
+    USART_CR1(this->baseAddress) &= ~USART_CR1_RE;
 }
