@@ -11,8 +11,9 @@ class Serial {
 private:
     SerialN n;
 public:
-    explicit Serial(SerialN n);
-    void print(const char* str);
+    explicit Serial(SerialN n, uint32_t baudRate = 9600u);
+    uint8_t readByte();
+    void printByte(uint8_t byte);
 };
 
 
