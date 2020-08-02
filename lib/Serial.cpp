@@ -9,49 +9,52 @@
 
 #include "common.h"
 
-#define USART1_SR __RMM(0x40013800u + 0x00u)
-#define USART1_DR __RMM(0x40013800u + 0x04u)
-#define USART1_BRR __RMM(0x40013800u + 0x08u)
-#define USART1_CR1 __RMM(0x40013800u + 0x0Cu)
+#define USART1_BASE_ADDR 0x40013800u
+#define USART2_BASE_ADDR 0x40004400u
+#define USART3_BASE_ADDR 0x40004800u
 
-Serial::Serial(SerialN n, uint32_t baudRate) {
-    this->n = n;
+#define USART_SR(base)  __RMM(base + 0x00u)
+#define USART_DR(base)  __RMM(base + 0x04u)
+#define USART_BRR(base) __RMM(base + 0x08u)
+#define USART_CR1(base) __RMM(base + 0x0Cu)
 
+Serial::Serial(SerialN n, uint32_t baudRate, bool enableRxInterrupt) {
     switch (n) {
-        case SerialN::S1:
-            //Utils::enablePeripheral(Utils::Peripheral::AFIO);
+        case SerialN::S1: {
             Utils::enablePeripheral(Utils::Peripheral::Usart1);
             //TX: A9, RX: A10
             Utils::enablePeripheral(Utils::Peripheral::PortA);
             GPIO::setOutPin(GPIO::Pin::A9, GPIO::OutMode::AltPushPull);
             GPIO::setInPin(GPIO::Pin::A10, GPIO::InMode::Floating);
 
-            uint32_t uartDiv = F_CPU / baudRate;
-            USART1_BRR = uartDiv;
-            USART1_CR1 = 0x200Cu;
+            this->baseAddress = USART1_BASE_ADDR;
             break;
-            /*case SerialN::S2:
-                Utils::enablePeripheral(Utils::Peripheral::Usart2);
-                //TX: A2, RX: A3
-                Utils::enablePeripheral(Utils::Peripheral::PortA);
-                break;
-            case SerialN::S3:
-                Utils::enablePeripheral(Utils::Peripheral::Usart3);
-                //TX: B10, RX: A11
-                Utils::enablePeripheral(Utils::Peripheral::PortB);
-                break;*/
+        }
+        case SerialN::S2: {
+            Utils::enablePeripheral(Utils::Peripheral::Usart2);
+            //TX: A2, RX: A3
+            Utils::enablePeripheral(Utils::Peripheral::PortA);
+            break;
+        }
+        case SerialN::S3: {
+            Utils::enablePeripheral(Utils::Peripheral::Usart3);
+            //TX: B10, RX: B11
+            Utils::enablePeripheral(Utils::Peripheral::PortB);
+            break;
+        }
     }
 
-
+    USART_BRR(this->baseAddress) = F_CPU / baudRate;
+    USART_CR1(this->baseAddress) = 0x200Cu;
 }
 
-uint8_t Serial::readByte() {
-    while (!(USART1_SR & (1u << 5u)));
-    return USART1_DR;
+uint8_t Serial::readByte() const {
+    while (!(USART_SR(this->baseAddress) & (1u << 5u)));
+    return USART_DR(this->baseAddress);
 }
 
-void Serial::printByte(uint8_t byte) {
-    while (!(USART1_SR & (1u << 7u)));
-    USART1_DR = byte;
-    while (!(USART1_SR & (1u << 6u)));
+void Serial::printByte(uint8_t byte) const {
+    while (!(USART_SR(this->baseAddress) & (1u << 7u)));
+    USART_DR(this->baseAddress) = byte;
+    while (!(USART_SR(this->baseAddress) & (1u << 6u)));
 }

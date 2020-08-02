@@ -9,11 +9,11 @@ enum class SerialN : uint8_t {
 
 class Serial {
 private:
-    SerialN n;
+    uintptr_t baseAddress;
 public:
-    explicit Serial(SerialN n, uint32_t baudRate = 9600u);
-    uint8_t readByte();
-    void printByte(uint8_t byte);
+    explicit Serial(SerialN n, uint32_t baudRate = 9600u, bool enableRxInterrupt = false);
+    uint8_t readByte() const;
+    void printByte(uint8_t byte) const;
 };
 
 
