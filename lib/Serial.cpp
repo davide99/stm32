@@ -34,12 +34,20 @@ Serial::Serial(SerialN n, uint32_t baudRate, bool enableRxInterrupt) {
             Utils::enablePeripheral(Utils::Peripheral::Usart2);
             //TX: A2, RX: A3
             Utils::enablePeripheral(Utils::Peripheral::PortA);
+            GPIO::setOutPin(GPIO::Pin::A2, GPIO::OutMode::AltPushPull);
+            GPIO::setInPin(GPIO::Pin::A3, GPIO::InMode::Floating);
+
+            this->baseAddress = USART2_BASE_ADDR;
             break;
         }
         case SerialN::S3: {
             Utils::enablePeripheral(Utils::Peripheral::Usart3);
             //TX: B10, RX: B11
             Utils::enablePeripheral(Utils::Peripheral::PortB);
+            GPIO::setOutPin(GPIO::Pin::B10, GPIO::OutMode::AltPushPull);
+            GPIO::setInPin(GPIO::Pin::B11, GPIO::InMode::Floating);
+
+            this->baseAddress = USART3_BASE_ADDR;
             break;
         }
     }
@@ -48,12 +56,12 @@ Serial::Serial(SerialN n, uint32_t baudRate, bool enableRxInterrupt) {
     USART_CR1(this->baseAddress) = 0x200Cu;
 }
 
-uint8_t Serial::readByte() const {
+uint8_t Serial::read() const {
     while (!(USART_SR(this->baseAddress) & (1u << 5u)));
     return USART_DR(this->baseAddress);
 }
 
-void Serial::printByte(uint8_t byte) const {
+void Serial::write(uint8_t byte) const {
     while (!(USART_SR(this->baseAddress) & (1u << 7u)));
     USART_DR(this->baseAddress) = byte;
     while (!(USART_SR(this->baseAddress) & (1u << 6u)));
