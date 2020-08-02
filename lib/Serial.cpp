@@ -18,9 +18,10 @@
 #define USART_BRR(base) __RMM(base + 0x08u)
 #define USART_CR1(base) __RMM(base + 0x0Cu)
 
-#define USART_CR1_RE ((uint32_t)(1u << 2u))
-#define USART_CR1_TE ((uint32_t)(1u << 3u))
-#define USART_CR1_UE ((uint32_t)(1u << 13u))
+#define USART_CR1_RE     ((uint32_t)(1u << 2u))
+#define USART_CR1_TE     ((uint32_t)(1u << 3u))
+#define USART_CR1_RXNEIE ((uint32_t)(1u << 5u))
+#define USART_CR1_UE     ((uint32_t)(1u << 13u))
 
 #define USART_SR_RXNE ((uint32_t)(1u << 5u))
 #define USART_SR_TC   ((uint32_t)(1u << 6u))

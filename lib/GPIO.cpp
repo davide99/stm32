@@ -19,10 +19,6 @@
 #define EXTI_FTSR __RMM(EXTI + 0x0Cu)
 #define EXTI_PR   __RMM(EXTI + 0x14u)
 
-#define NVIC_BASE 0xE000E100u //Programming manual, pag 128
-#define NVIC_ISER0_ADDR (NVIC_BASE + 0x000u)
-#define NVIC_IPR0_ADDR  (NVIC_BASE + 0x300u)
-
 
 static void calcValues(GPIO::Pin pin, uint8_t &pinValue, uintptr_t &gpioBaseAddr) {
     /*
@@ -109,17 +105,7 @@ bool GPIO::digitalRead(GPIO::Pin pin) {
     return (GPIO_IDR(gpioBaseAddr) & (1u << pinValue)) != 0;
 }
 
-void GPIO::setupInterrupt(Pin pin, IntTrigger trigger, IntPriority priority) {
-    /*
-     * Line interrupt configuration:
-     * -Line 0
-     * -Line 1
-     * -Line 2
-     * -Line 3
-     * -Line 4
-     * -Line 5..9
-     * -Line 10..15
-     */
+void GPIO::setupInterrupt(Pin pin, IntTrigger trigger, Interrupts::Priority priority) {
 
     uint8_t pinValue = static_cast<uint8_t>(pin) & 0xFu;
     uint8_t portValue = static_cast<uint8_t>(pin) >> 4u;
@@ -144,33 +130,27 @@ void GPIO::setupInterrupt(Pin pin, IntTrigger trigger, IntPriority priority) {
     //Configure the interrupt mask register
     EXTI_IMR |= (uint32_t) (1u << pinValue); //Unmask interrupt for line pinValue
 
-    uint8_t irqNumbers[] = {6u, 7u, 8u, 9u, 10u, 23u, 40u}; //RM008, pag 205
-    /*                     ^            ^   ^   ^
-     *                     Line 0       |   |   |
-     *                             Line 4   |   |
-     *                              Line 5..9   |
-     *                                Line 10..15
+    /*
+     * Line interrupt configuration:
+     * -Line 0
+     * -Line 1
+     * -Line 2
+     * -Line 3
+     * -Line 4
+     * -Line 5..9
+     * -Line 10..15
      */
-    uint8_t index;
+
+    Interrupts::Interrupt interrupt;
     if (pinValue <= 4)
-        index = pinValue;
+        interrupt = static_cast<Interrupts::Interrupt>(static_cast<uint8_t>(Interrupts::Interrupt::Exti0) + pinValue);
     else if (pinValue <= 9)
-        index = 5;
+        interrupt = Interrupts::Interrupt::Exti5_9;
     else
-        index = 6;
+        interrupt = Interrupts::Interrupt::Exti10_15;
 
-    //Set the interrupt priority (Programming manual rev6, pag 125)
-    //Find the IPRx register
-    if (priority != IntPriority::Default) {
-        //OK, now we are finally ready to set the interrupt priority
-        __RMMB(NVIC_IPR0_ADDR + irqNumbers[index]) = (uint8_t) (static_cast<uint8_t>(priority) << 4u);
-    }
-
-    //Enable the interrupt
-    uint8_t iserOffset = (uint8_t) (irqNumbers[index] >> 3u) & ~0b11u;
-    uint8_t iserBitOffset = irqNumbers[index] & 0b11111u;
-
-    __RMM(NVIC_ISER0_ADDR + iserOffset) |= (uint32_t) (1u << iserBitOffset);
+    Interrupts::setPriority(interrupt, priority);
+    Interrupts::enable(interrupt);
 }
 
 void GPIO::clearPendingInterrupt(GPIO::Pin pin) {

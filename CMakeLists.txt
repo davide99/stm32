@@ -50,7 +50,7 @@ add_executable(${PROJECT_NAME}
         lib/Serial.h lib/Serial.cpp
         lib/GPIO.h lib/GPIO.cpp
         lib/common.h
-        lib/Utils.cpp lib/Utils.h)
+        lib/Utils.cpp lib/Utils.h lib/Interrupts.cpp lib/Interrupts.h)
 
 target_link_libraries(${PROJECT_NAME}
         ${CPU_OPTIONS}

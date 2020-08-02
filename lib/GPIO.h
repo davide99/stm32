@@ -2,6 +2,7 @@
 #define STM32_GPIO_H
 
 #include <cstdint>
+#include "Interrupts.h"
 
 namespace GPIO {
 
@@ -37,17 +38,7 @@ namespace GPIO {
         Rising, Falling, RisingAndFalling
     };
 
-    enum class IntPriority : uint8_t {
-        P0 = 0u,
-        Max = P0,
-        P1 = 1u,
-        P2, P3, P4, P5, P6, P7, P8, P9,
-        P10, P11, P12, P13, P14, P15,
-        Min = P15,
-        Default
-    };
-
-    void setupInterrupt(Pin pin, IntTrigger trigger, IntPriority priority = IntPriority::Default);
+    void setupInterrupt(Pin pin, IntTrigger trigger, Interrupts::Priority priority = Interrupts::Priority::Default);
 
     void clearPendingInterrupt(Pin pin);
 }
