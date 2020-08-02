@@ -1,4 +1,5 @@
 #include "../lib/GPIO.h"
+#include "../lib/Utils.h"
 
 /*
  * +---------+            ^
@@ -19,14 +20,15 @@ void EXTI0_IRQ_handler(void) {
 }
 
 int main() {
-    GPIO::enablePort(GPIO::Port::A);
-    GPIO::enablePort(GPIO::Port::C);
+    Utils::enablePeripheral(Utils::Peripheral::PortA);
+    Utils::enablePeripheral(Utils::Peripheral::PortC);
 
     GPIO::setOutPin(GPIO::Pin::C13);
     GPIO::setInPin(GPIO::Pin::A0, GPIO::InMode::PullDown);
 
-    GPIO::enableAlternativeFunction();
-    GPIO::setupInterrupt(GPIO::Pin::A0, GPIO::IntTrigger::Rising, GPIO::IntPriority::Default);
+    //Alternative function needs to be enabled to make interrupts work
+    Utils::enablePeripheral(Utils::Peripheral::AFIO);
+    GPIO::setupInterrupt(GPIO::Pin::A0, GPIO::IntTrigger::Rising);
 
     flag = false;
 

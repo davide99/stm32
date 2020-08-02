@@ -1,4 +1,5 @@
 #include "../lib/GPIO.h"
+#include "../lib/Utils.h"
 
 /*
  * +---------+            ^
@@ -10,7 +11,7 @@
  */
 
 int main() {
-    GPIO::enablePort(GPIO::Port::C);
+    Utils::enablePeripheral(Utils::Peripheral::PortC);
 
     GPIO::setOutPin(GPIO::Pin::C13);
     GPIO::setInPin(GPIO::Pin::C14, GPIO::InMode::PullDown);

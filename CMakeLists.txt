@@ -47,9 +47,10 @@ add_executable(${PROJECT_NAME}
         vector_table.s
         core.s
         main.cpp
-        lib/USART.h lib/USART.cpp
+        lib/Serial.h lib/Serial.cpp
         lib/GPIO.h lib/GPIO.cpp
-        lib/common.h)
+        lib/common.h
+        lib/Utils.cpp lib/Utils.h)
 
 target_link_libraries(${PROJECT_NAME}
         ${CPU_OPTIONS}

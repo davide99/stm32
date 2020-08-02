@@ -5,12 +5,6 @@
 
 namespace GPIO {
 
-    enum class Port : uint8_t {
-        A = 2u, B, C
-    };
-
-    void enablePort(Port port);
-
     enum class Pin : uint8_t {
         A0 = 0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A15 = 15,
         B0 = 16, B1, B3 = 19, B4, B5, B6, B7, B8, B9, B10, B11, B12, B13, B14, B15,
@@ -38,8 +32,6 @@ namespace GPIO {
     void digitalWrite(Pin pin, bool value);
 
     bool digitalRead(Pin pin);
-
-    void enableAlternativeFunction();
 
     enum class IntTrigger : uint8_t {
         Rising, Falling, RisingAndFalling

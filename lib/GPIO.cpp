@@ -2,8 +2,6 @@
 
 #include "common.h"
 
-#define RCC_APB2ENR __RMM(0x40021000u + 0x18u)
-
 #define GPIOA_BASE 0x40010800u
 #define GPIO_OFFSET 0x400u      //GPIOA_BASE + GPIO_OFFSET = GPIOB_BASE
 
@@ -25,10 +23,6 @@
 #define NVIC_ISER0_ADDR (NVIC_BASE + 0x000u)
 #define NVIC_IPR0_ADDR  (NVIC_BASE + 0x300u)
 
-
-void GPIO::enablePort(GPIO::Port port) {
-    RCC_APB2ENR |= (uint32_t) (1u << static_cast<uint8_t>(port)); //IOPx_EN
-}
 
 static void calcValues(GPIO::Pin pin, uint8_t &pinValue, uintptr_t &gpioBaseAddr) {
     /*
@@ -181,12 +175,4 @@ void GPIO::setupInterrupt(Pin pin, IntTrigger trigger, IntPriority priority) {
 
 void GPIO::clearPendingInterrupt(GPIO::Pin pin) {
     EXTI_PR |= (1u << (static_cast<uint8_t>(pin) & 0xFu));
-}
-
-void GPIO::enableAlternativeFunction() {
-    /*
-     * Alternative function needs to be enabled to make external
-     * interrupts working
-     */
-    RCC_APB2ENR |= 1u;
 }
