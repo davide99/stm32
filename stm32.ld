@@ -84,7 +84,7 @@ SECTIONS{
         _esystem_ram = .;
     } >RAM
 
-    /*.preinit_array : {
+    .preinit_array : {
         . = ALIGN(4);
         _spreinit_array = .;
         KEEP (*(.preinit_array))
@@ -109,5 +109,5 @@ SECTIONS{
         KEEP (*(.fini_array*))
         _efini_array = .;
         . = ALIGN(4);
-    } >FLASH*/
+    } >FLASH
 }

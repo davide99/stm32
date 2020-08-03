@@ -27,7 +27,9 @@
 #define USART_SR_TC   ((uint32_t)(1u << 6u))
 #define USART_SR_TXE  ((uint32_t)(1u << 7u))
 
-Serial::Serial(SerialN n, uint32_t baudRate, bool enableRxInterrupt) {
+Serial::Serial(SerialN n, uint32_t baudRate, bool enableRxInterrupt, Interrupts::Priority priority) {
+    Interrupts::Interrupt interrupt;
+
     switch (n) {
         case SerialN::S1: {
             Utils::enablePeripheral(Utils::Peripheral::Usart1);
@@ -37,6 +39,7 @@ Serial::Serial(SerialN n, uint32_t baudRate, bool enableRxInterrupt) {
             GPIO::setInPin(GPIO::Pin::A10, GPIO::InMode::Floating);
 
             this->baseAddress = USART1_BASE_ADDR;
+            interrupt = Interrupts::Usart1;
             break;
         }
         case SerialN::S2: {
@@ -47,6 +50,7 @@ Serial::Serial(SerialN n, uint32_t baudRate, bool enableRxInterrupt) {
             GPIO::setInPin(GPIO::Pin::A3, GPIO::InMode::Floating);
 
             this->baseAddress = USART2_BASE_ADDR;
+            interrupt = Interrupts::Usart2;
             break;
         }
         case SerialN::S3: {
@@ -57,12 +61,19 @@ Serial::Serial(SerialN n, uint32_t baudRate, bool enableRxInterrupt) {
             GPIO::setInPin(GPIO::Pin::B11, GPIO::InMode::Floating);
 
             this->baseAddress = USART3_BASE_ADDR;
+            interrupt = Interrupts::Usart3;
             break;
         }
     }
 
+    if (enableRxInterrupt) {
+        Interrupts::setPriority(interrupt, priority);
+        Interrupts::enable(interrupt);
+    }
+
     USART_BRR(this->baseAddress) = F_CPU / baudRate;
-    USART_CR1(this->baseAddress) = USART_CR1_RE | USART_CR1_TE | USART_CR1_UE;
+    USART_CR1(this->baseAddress) =
+            USART_CR1_RE | USART_CR1_TE | USART_CR1_UE | (enableRxInterrupt ? USART_CR1_RXNEIE : 0u);
 }
 
 uint8_t Serial::read() const {

@@ -70,5 +70,5 @@ reset_handler:
     CMP r1, r2
     BCC reset_bss
 
-    B main
+    B init
 .size reset_handler, .-reset_handler

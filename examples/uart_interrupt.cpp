@@ -1,4 +1,4 @@
-#include "lib/Serial.h"
+#include "../lib/Serial.h"
 
 Serial serial(SerialN::S3, 115200, true);
 
