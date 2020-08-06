@@ -46,11 +46,14 @@ link_directories(
 add_executable(${PROJECT_NAME}
         vector_table.s
         core.s
+        core.c
         main.cpp
         lib/Serial.h lib/Serial.cpp
         lib/GPIO.h lib/GPIO.cpp
         lib/common.h
-        lib/Utils.cpp lib/Utils.h lib/Interrupts.cpp lib/Interrupts.h core.c)
+        lib/Utils.cpp lib/Utils.h
+        lib/Interrupts.cpp lib/Interrupts.h
+        lib/SPI.cpp lib/SPI.h)
 
 target_link_libraries(${PROJECT_NAME}
         ${CPU_OPTIONS}

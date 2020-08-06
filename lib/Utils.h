@@ -13,7 +13,9 @@ namespace Utils {
         PortA = 2u + 0b000000u,
         PortB = 3u + 0b000000u,
         PortC = 4u + 0b000000u,
+        Spi1 = 12u + 0b000000u,
         Usart1 = 14u + 0b000000u,
+        Spi2 = 14u + 0b100000u,
         Usart2 = 17u + 0b100000u,
         Usart3 = 18u + 0b100000u,
     };
