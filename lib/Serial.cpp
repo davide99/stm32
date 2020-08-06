@@ -81,7 +81,7 @@ uint8_t Serial::read() const {
     return USART_DR(this->baseAddress);
 }
 
-void Serial::write(uint8_t byte) const {
+void Serial::print(uint8_t byte) const {
     while (!(USART_SR(this->baseAddress) & USART_SR_TXE));
     USART_DR(this->baseAddress) = byte;
     while (!(USART_SR(this->baseAddress) & USART_SR_TC));
@@ -89,4 +89,52 @@ void Serial::write(uint8_t byte) const {
 
 void Serial::close() const {
     USART_CR1(this->baseAddress) &= ~USART_CR1_RE;
+}
+
+void Serial::print(char *str) const {
+    while (*str) {
+        while (!(USART_SR(this->baseAddress) & USART_SR_TXE));
+        USART_DR(this->baseAddress) = *str;
+        while (!(USART_SR(this->baseAddress) & USART_SR_TC));
+        str++;
+    }
+}
+
+void Serial::print(const std::string &string) const {
+    print(const_cast<char *>(string.c_str()));
+}
+
+
+void Serial::print(int val, int base) const {
+    char num[] = "0123456789ABCDEF";
+    char buff[20];
+    int pos = 0;
+
+    if (val < 0) {
+        print('-');
+        val = -val;
+    }
+
+    switch (base) {
+        case 2:
+            print("0b");
+            break;
+        case 8:
+            print('0');
+            break;
+        case 16:
+            print("0x");
+            break;
+        default:
+            break;
+    }
+
+    while (val) {
+        buff[pos++] = num[val % base];
+        val /= base;
+    }
+
+    buff[pos] = 0;
+    Utils::reverseString(buff, pos);
+    print(buff);
 }

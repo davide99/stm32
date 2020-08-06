@@ -53,7 +53,7 @@ add_executable(${PROJECT_NAME}
         lib/common.h
         lib/Utils.cpp lib/Utils.h
         lib/Interrupts.cpp lib/Interrupts.h
-        lib/SPI.cpp lib/SPI.h)
+        lib/SPI.cpp lib/SPI.h examples_to_be_fixed/Mfrc522.cpp examples_to_be_fixed/Mfrc522.h)
 
 target_link_libraries(${PROJECT_NAME}
         ${CPU_OPTIONS}

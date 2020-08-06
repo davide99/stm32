@@ -2,6 +2,7 @@
 #define STM32_UTILS_H
 
 #include <cstdint>
+#include <cstddef>
 
 namespace Utils {
     /*
@@ -23,6 +24,8 @@ namespace Utils {
     void enablePeripheral(Peripheral peripheral);
 
     void disablePeripheral(Peripheral peripheral);
+
+    void reverseString(char *str, size_t len);
 }
 
 #endif //STM32_UTILS_H

@@ -1,15 +1,11 @@
 #include "lib/Serial.h"
 
-Serial serial(SerialN::S3, 115200, true);
+int main() {
+    Serial serial(SerialN::S3, 115200);
+    serial.print("Uart initialized\n");
+    serial.print(200);
 
-extern "C" {
-void USART3_IRQ_handler() {
-    serial.write(serial.read());
-}
-}
+    while (true) {
 
-int main(){
-    while (true){
-        __asm__("wfi");
     }
 }

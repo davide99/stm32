@@ -15,3 +15,14 @@ void Utils::disablePeripheral(Utils::Peripheral peripheral) {
 
     __RMM(RCC_APB2ENR_ADDR + ((uint8_t) (p >> 3u) & ~0b11u)) &= ~(1u << (p & 0b11111u));
 }
+
+void Utils::reverseString(char *str, size_t len) {
+    char *right = str + len - 1;
+    char tmp;
+
+    while (str < right) {
+        tmp = *str;
+        *(str++) = *right;
+        *(right--) = tmp;
+    }
+}
