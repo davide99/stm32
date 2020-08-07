@@ -1,4 +1,4 @@
-#include "Mfrc522.h"
+#include "MFRC522.h"
 #include "lib/SPI.h"
 
 #define delay(x) { \
@@ -78,35 +78,41 @@ enum StatusCode : uint8_t {
 };
 
 
-void Mfrc522::PCD_WriteRegister(uint8_t reg, uint8_t value) {
+void MFRC522::PCD_WriteRegister(uint8_t reg, uint8_t value) {
     this->spi.beginTransaction();
+    this->spi.slaveSelect();
     this->spi.transfer(reg);
     this->spi.transfer(value);
+    this->spi.slaveRelease();
     this->spi.endTransaction();
 }
 
-void Mfrc522::PCD_WriteRegister(uint8_t reg, uint8_t count, const uint8_t *values) {
+void MFRC522::PCD_WriteRegister(uint8_t reg, uint8_t count, const uint8_t *values) {
     this->spi.beginTransaction();
+    this->spi.slaveSelect();
     this->spi.transfer(reg);
 
     for (uint8_t i = 0; i < count; i++)
         this->spi.transfer(values[i]);
 
+    this->spi.slaveRelease();
     this->spi.endTransaction();
 }
 
-uint8_t Mfrc522::PCD_ReadRegister(uint8_t reg) {
+uint8_t MFRC522::PCD_ReadRegister(uint8_t reg) {
     uint8_t value;
 
     this->spi.beginTransaction();
+    this->spi.slaveSelect();
     this->spi.transfer(reg | 0x80u);
     value = this->spi.transfer(0);
+    this->spi.slaveRelease();
     this->spi.endTransaction();
 
     return value;
 }
 
-void Mfrc522::PCD_ReadRegister(uint8_t reg, uint8_t count, uint8_t *values, uint8_t rxAlign) {
+void MFRC522::PCD_ReadRegister(uint8_t reg, uint8_t count, uint8_t *values, uint8_t rxAlign) {
     uint8_t index;
 
     if (!count)
@@ -115,6 +121,7 @@ void Mfrc522::PCD_ReadRegister(uint8_t reg, uint8_t count, uint8_t *values, uint
     reg |= 0x80u;               // MSB == 1 is for reading. LSB is not used in address. Datasheet section 8.1.2.3.
     index = 0;                  // Index in values array.
     this->spi.beginTransaction();
+    this->spi.slaveSelect();
     count--;                    // One read is performed outside of the loop
     this->spi.transfer(reg);    // Tell MFRC522 which address we want to read
 
@@ -134,24 +141,25 @@ void Mfrc522::PCD_ReadRegister(uint8_t reg, uint8_t count, uint8_t *values, uint
     }
     values[index] = this->spi.transfer(0);       // Read the final byte. Send 0 to stop reading.
 
+    this->spi.slaveRelease();
     this->spi.endTransaction();
 }
 
-void Mfrc522::PCD_ClearRegisterBitMask(uint8_t reg, uint8_t mask) {
+void MFRC522::PCD_ClearRegisterBitMask(uint8_t reg, uint8_t mask) {
     uint8_t tmp;
 
     tmp = PCD_ReadRegister(reg);
     PCD_WriteRegister(reg, tmp & (~mask));
 }
 
-void Mfrc522::PCD_SetRegisterBitMask(uint8_t reg, uint8_t mask) {
+void MFRC522::PCD_SetRegisterBitMask(uint8_t reg, uint8_t mask) {
     uint8_t tmp;
 
     tmp = PCD_ReadRegister(reg);
     PCD_WriteRegister(reg, tmp | mask);
 }
 
-void Mfrc522::PCD_Reset() {
+void MFRC522::PCD_Reset() {
     uint8_t count;
     PCD_WriteRegister(CommandReg, PCD_SoftReset);
 
@@ -161,7 +169,7 @@ void Mfrc522::PCD_Reset() {
     } while ((PCD_ReadRegister(CommandReg) & (1u << 4u)) && (++count) < 3);
 }
 
-void Mfrc522::PCD_AntennaOn() {
+void MFRC522::PCD_AntennaOn() {
     uint8_t value;
 
     value = PCD_ReadRegister(TxControlReg);
@@ -169,7 +177,8 @@ void Mfrc522::PCD_AntennaOn() {
         PCD_WriteRegister(TxControlReg, value | 0x03u);
 }
 
-Mfrc522::Mfrc522(const SPI &spi) : spi(spi) {
+MFRC522::MFRC522(const SPI &spi) : spi(spi) {
+    this->spi.slaveRelease();
     //Soft reset
     PCD_Reset();
 
@@ -204,9 +213,9 @@ Mfrc522::Mfrc522(const SPI &spi) : spi(spi) {
 }
 
 uint8_t
-Mfrc522::PCD_TransceiveData(uint8_t *sendData, uint8_t sendLen, uint8_t *backData, uint8_t &backLen,
+MFRC522::PCD_TransceiveData(uint8_t *sendData, uint8_t sendLen, uint8_t *backData, uint8_t &backLen,
                             uint8_t &validBits, uint8_t rxAlign, int8_t checkCRC) {
-    return Mfrc522::PCD_CommunicateWithPICC(PCD_Transceive, 0x30u, sendData, sendLen, backData,
+    return MFRC522::PCD_CommunicateWithPICC(PCD_Transceive, 0x30u, sendData, sendLen, backData,
                                             backLen, validBits, rxAlign, checkCRC);
 }
 
@@ -215,7 +224,7 @@ Mfrc522::PCD_TransceiveData(uint8_t *sendData, uint8_t sendLen, uint8_t *backDat
  *
  * @return STATUS_OK on success, STATUS_??? otherwise.
  */
-uint8_t Mfrc522::PCD_CalculateCRC(
+uint8_t MFRC522::PCD_CalculateCRC(
         uint8_t *data,      //< In: Pointer to the data to transfer to the FIFO for CRC calculation.
         uint8_t length,     //< In: The number of bytes to transfer.
         uint8_t *result) {  //< Out: Pointer to result buffer. Result is written to result[0..1], low byte first.
@@ -249,7 +258,7 @@ uint8_t Mfrc522::PCD_CalculateCRC(
  *
  * @return STATUS_OK on success, STATUS_??? otherwise.
  */
-uint8_t Mfrc522::PCD_CommunicateWithPICC(
+uint8_t MFRC522::PCD_CommunicateWithPICC(
         uint8_t command,    //< The command to execute. One of the PCD_Command enums.
         uint8_t waitIRq,    //< The bits in the ComIrqReg register that signals successful completion of the command.
         uint8_t *sendData,  //< Pointer to the data to transfer to the FIFO.
@@ -343,7 +352,7 @@ uint8_t Mfrc522::PCD_CommunicateWithPICC(
     return STATUS_OK;
 }
 
-uint8_t Mfrc522::PICC_HaltA() {
+uint8_t MFRC522::PICC_HaltA() {
     uint8_t result;
     uint8_t buffer[4];
 
@@ -388,7 +397,7 @@ uint8_t Mfrc522::PICC_HaltA() {
  *
  * @return STATUS_OK on success, STATUS_??? otherwise.
  */
-uint8_t Mfrc522::PICC_Select(MFRC522_Uid &uid) { //< Pointer to MFRC522_Uid struct
+uint8_t MFRC522::PICC_Select(MFRC522_Uid &uid) { //< Pointer to MFRC522_Uid struct
     int8_t uidComplete, selectDone;
     uint8_t cascadeLevel = 1;
     uint8_t result;
@@ -561,24 +570,24 @@ uint8_t Mfrc522::PICC_Select(MFRC522_Uid &uid) { //< Pointer to MFRC522_Uid stru
     return STATUS_OK;
 }
 
-bool Mfrc522::PICC_ReadCardSerial(MFRC522_Uid &uid) {
+bool MFRC522::PICC_ReadCardSerial(MFRC522_Uid &uid) {
     return (PICC_Select(uid) == STATUS_OK);
 }
 
-void Mfrc522::PCD_EnableIrq() {
+void MFRC522::PCD_EnableIrq() {
     PCD_WriteRegister(ComIEnReg, 0xA0u); //enable interrupt
 }
 
-void Mfrc522::PCD_ClearInterrupt() {
+void MFRC522::PCD_ClearInterrupt() {
     PCD_WriteRegister(ComIrqReg, 0x7Fu);
 }
 
-void Mfrc522::PCD_InterruptReactivateReception() {
+void MFRC522::PCD_InterruptReactivateReception() {
     PCD_WriteRegister(FIFODataReg, PICC_CMD_REQA);
     PCD_WriteRegister(CommandReg, PCD_Transceive);
     PCD_WriteRegister(BitFramingReg, 0x87u);
 }
 
-uint8_t Mfrc522::getVersion() {
+uint8_t MFRC522::getVersion() {
     return PCD_ReadRegister(VersionReg);
 }

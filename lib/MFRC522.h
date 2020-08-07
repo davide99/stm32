@@ -11,7 +11,7 @@ typedef struct {
     //uint8_t sak;          // The SAK (Select acknowledge) byte returned from the PICC after successful selection.
 } MFRC522_Uid;
 
-class Mfrc522 {
+class MFRC522 {
 private:
     const SPI &spi;
 private:
@@ -45,7 +45,7 @@ private:
 
 
 public:
-    explicit Mfrc522(const SPI &spi);
+    explicit MFRC522(const SPI &spi);
 
     uint8_t getVersion();
 

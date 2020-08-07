@@ -82,6 +82,9 @@ uint8_t Serial::read() const {
 }
 
 void Serial::print(uint8_t byte) const {
+    if (byte < 0x20u || byte > 0x7Fu) //Is not printable?
+        byte = '.';
+
     while (!(USART_SR(this->baseAddress) & USART_SR_TXE));
     USART_DR(this->baseAddress) = byte;
     while (!(USART_SR(this->baseAddress) & USART_SR_TC));
@@ -111,22 +114,8 @@ void Serial::print(int val, int base) const {
     int pos = 0;
 
     if (val < 0) {
-        print('-');
+        print((uint8_t) '-');
         val = -val;
-    }
-
-    switch (base) {
-        case 2:
-            print("0b");
-            break;
-        case 8:
-            print('0');
-            break;
-        case 16:
-            print("0x");
-            break;
-        default:
-            break;
     }
 
     while (val) {

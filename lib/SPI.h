@@ -28,14 +28,20 @@ private:
     GPIO::Pin SSpin;
     uintptr_t baseAddr;
 public:
-    SPI(SPIn n, GPIO::Pin SSpin, SPImode mode = SPImode::Mode0, SPIdiv div = SPIdiv::Div64, bool format16 = false,
-        bool lsbFirst = false);
+    SPI(SPIn n, GPIO::Pin SSpin);
 
-    void beginTransaction() const;
+    void beginTransaction(SPImode mode = SPImode::Mode0, SPIdiv div = SPIdiv::Div64, bool format16 = false,
+                          bool lsbFirst = false) const;
 
     void endTransaction() const;
 
     uint16_t transfer(uint16_t data) const;
+
+    void slaveSelect() const;
+
+    void slaveRelease() const;
+
+    ~SPI();
 };
 
 

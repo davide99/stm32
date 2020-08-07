@@ -21,17 +21,18 @@
 #define SPI_DR(base)  __RMM(base + 0xCu)
 
 
-SPI::SPI(SPIn n, GPIO::Pin SSpin, SPImode mode, SPIdiv div, bool format16, bool lsbFirst) {
+SPI::SPI(SPIn n, GPIO::Pin SSpin) {
     this->SSpin = SSpin;
     this->baseAddr = static_cast<uintptr_t>(n);
     GPIO::setOutPin(SSpin, GPIO::OutMode::PushPull);
+    GPIO::digitalWrite(SSpin, true);
 
     switch (n) {
         case SPIn::SPI1: {
             Utils::enablePeripheral(Utils::Peripheral::PortA);
             GPIO::setOutPin(GPIO::Pin::A5, GPIO::OutMode::AltPushPull); //SCK
-            GPIO::setOutPin(GPIO::Pin::A7, GPIO::OutMode::AltPushPull); //MOSI
             GPIO::setInPin(GPIO::Pin::A6, GPIO::InMode::Floating);      //MISO
+            GPIO::setOutPin(GPIO::Pin::A7, GPIO::OutMode::AltPushPull); //MOSI
 
             Utils::enablePeripheral(Utils::Peripheral::Spi1);
             break;
@@ -39,15 +40,18 @@ SPI::SPI(SPIn n, GPIO::Pin SSpin, SPImode mode, SPIdiv div, bool format16, bool 
         case SPIn::SPI2: {
             Utils::enablePeripheral(Utils::Peripheral::PortB);
             GPIO::setOutPin(GPIO::Pin::B13, GPIO::OutMode::AltPushPull); //SCK
-            GPIO::setOutPin(GPIO::Pin::B15, GPIO::OutMode::AltPushPull); //MOSI
             GPIO::setInPin(GPIO::Pin::B14, GPIO::InMode::Floating);      //MISO
+            GPIO::setOutPin(GPIO::Pin::B15, GPIO::OutMode::AltPushPull); //MOSI
 
             Utils::enablePeripheral(Utils::Peripheral::Spi2);
             break;
         }
     }
+}
 
+void SPI::beginTransaction(SPImode mode, SPIdiv div, bool format16, bool lsbFirst) const {
     SPI_CR1(this->baseAddr) =
+            SPI_CR1_SPE |
             SPI_CR1_MSTR |
             SPI_CR1_SSM |
             SPI_CR1_SSI |
@@ -56,28 +60,27 @@ SPI::SPI(SPIn n, GPIO::Pin SSpin, SPImode mode, SPIdiv div, bool format16, bool 
             ((mode == SPImode::Mode1 || mode == SPImode::Mode3) ? SPI_CR1_CPHA : 0u) |
             (format16 ? SPI_CR1_DFF : 0u) |
             (lsbFirst ? SPI_CR1_LSBFIRST : 0u);
-
-    GPIO::digitalWrite(this->SSpin, true);
-}
-
-void SPI::beginTransaction() const {
-    SPI_CR1(this->baseAddr) |= SPI_CR1_SPE;
-    GPIO::digitalWrite(this->SSpin, false);
 }
 
 void SPI::endTransaction() const {
-    GPIO::digitalWrite(this->SSpin, true);
     while (!(SPI_SR(this->baseAddr) & SPI_SR_TXE));
     while (SPI_SR(this->baseAddr) & SPI_SR_BSY);
-    SPI_CR1(this->baseAddr) &= ~SPI_CR1_SPE;
 }
 
 uint16_t SPI::transfer(uint16_t data) const {
     SPI_DR(this->baseAddr) = data;
-
-    while (!(SPI_SR(this->baseAddr) & SPI_SR_TXE));
     while (!(SPI_SR(this->baseAddr) & SPI_SR_RXNE));
-
     return SPI_DR(this->baseAddr);
 }
 
+void SPI::slaveSelect() const {
+    GPIO::digitalWrite(this->SSpin, false);
+}
+
+void SPI::slaveRelease() const {
+    GPIO::digitalWrite(this->SSpin, true);
+}
+
+SPI::~SPI() {
+    SPI_CR1(this->baseAddr) &= ~SPI_CR1_SPE;
+}
