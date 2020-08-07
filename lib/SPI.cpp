@@ -69,7 +69,8 @@ void SPI::endTransaction() const {
 
 uint16_t SPI::transfer(uint16_t data) const {
     SPI_DR(this->baseAddr) = data;
-    while (!(SPI_SR(this->baseAddr) & SPI_SR_RXNE));
+    if (SPI_CR1(this->baseAddr) & SPI_CR1_SPE)
+        while (!(SPI_SR(this->baseAddr) & SPI_SR_RXNE));
     return SPI_DR(this->baseAddr);
 }
 

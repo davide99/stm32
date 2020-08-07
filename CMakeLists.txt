@@ -55,7 +55,7 @@ add_executable(${PROJECT_NAME}
         lib/Interrupts.cpp lib/Interrupts.h
         lib/SPI.cpp lib/SPI.h
         lib/MFRC522.cpp lib/MFRC522.h
-        )
+        lib/SD.cpp lib/SD.h)
 
 target_link_libraries(${PROJECT_NAME}
         ${CPU_OPTIONS}
