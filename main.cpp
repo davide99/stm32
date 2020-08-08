@@ -8,12 +8,12 @@ int main() {
     SPI spi(SPIn::SPI1, GPIO::Pin::B12);
     SD sd(spi);
 
-    uint8_t buff[512];
+    uint8_t buff[1024];
     for (uint8_t &i : buff)
         i = 0;
 
-    sd.read(buff, 0);
-    for (int i = 0; i < 512; i++) {
+    sd.read(0, buff, 2);
+    for (int i = 0; i < 1024; i++) {
         if (i % 16 == 0)
             serial.print("\n");
         serial.print((uint8_t) buff[i]);

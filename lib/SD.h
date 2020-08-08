@@ -10,7 +10,7 @@ private:
     uint8_t type;
 public:
     explicit SD(const SPI &spi);
-    bool read(uint8_t* buff, uint32_t sector);
+    bool read(uint32_t sector, uint8_t *buff, uint32_t count = 1);
 private:
     uint8_t sendCmd(uint8_t cmd, uint32_t arg);
     uint8_t readyWait();
