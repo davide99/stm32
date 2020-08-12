@@ -15,6 +15,7 @@ namespace Interrupts {
         Exti3 = 9u,
         Exti4 = 10u,
         Exti5_9 = 23u,
+        Tim2 = 28u,
         Usart1 = 37u,
         Usart2 = 38u,
         Usart3 = 39u,

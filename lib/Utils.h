@@ -16,6 +16,7 @@ namespace Utils {
         PortC = 4u + 0b000000u,
         Spi1 = 12u + 0b000000u,
         Usart1 = 14u + 0b000000u,
+        Timer2 = 0u + 0b100000u,
         Spi2 = 14u + 0b100000u,
         Usart2 = 17u + 0b100000u,
         Usart3 = 18u + 0b100000u,
@@ -23,7 +24,7 @@ namespace Utils {
 
     void enablePeripheral(Peripheral peripheral);
 
-    void disablePeripheral(Peripheral peripheral);
+    void resetPeripheral(Peripheral peripheral);
 
     void reverseString(char *str, size_t len);
 }

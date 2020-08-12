@@ -1,23 +1,15 @@
 #include "lib/Serial.h"
-#include "lib/SPI.h"
-#include "lib/SD.h"
+#include "lib/Clock.h"
 
 int main() {
     Serial serial(SerialN::S3, 115200);
     serial.print("Uart initialized\n");
-    SPI spi(SPIn::SPI1, GPIO::Pin::B12);
-    SD sd(spi);
 
-    uint8_t buff[1024];
-    for (uint8_t &i : buff)
-        i = 0;
-
-    sd.read(0, buff, 2);
-    for (int i = 0; i < 1024; i++) {
-        if (i % 16 == 0)
-            serial.print("\n");
-        serial.print((uint8_t) buff[i]);
-    }
+    serial.print("Clock speed: ");
+    serial.print(Clock::getSystemClockMHz(), 10);
+    serial.print("\nAHB speed: ");
+    serial.print(Clock::getAHBClockMHz(), 10);
+    serial.print("\n");
 
     while (true) {
         __asm__("nop");
